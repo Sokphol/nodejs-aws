@@ -1,6 +1,6 @@
 export const APP_ERROR_MESSAGE = {
   // User Resource Message Error
-  createdUser: "User created successfully",
+  createdUser: "User is gay created successfully",
   userAuthenticated: "User Authenticated successfully",
   userReturned: "User Returned successfully",
   userDoesntExist: "User does not exist",
