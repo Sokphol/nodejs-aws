@@ -2,37 +2,37 @@ name: CI/CD Pipeline for Service
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main] # Specify branches as needed
   push:
-    branches: [main]
+    branches: [main] # Specify branches as needed
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Specifies that the job should run on the latest Ubuntu virtual environment provided by GitHub
     defaults:
       run:
-        working-directory: "."
+        working-directory: "." # Adjust this to the root directory of your Node.js project
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # This step checks out your repository under $GITHUB_WORKSPACE
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4 # This step sets up a Node.js environment with a specified version
         with:
-          node-version: "20"
+          node-version: "20" # Specify the Node.js version you require, e.g., '14', '16'
 
       - name: Install dependencies
-        run: yarn install
+        run: yarn install # Runs yarn install to install all dependencies defined in your package.json
 
       - name: Run build
-        run: yarn build
+        run: yarn build # Executes the build script defined in your package.json
 
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4 # Archives build artifacts for use in later jobs or for deployment
         with:
-          name: build
-          path: ./build
+          name: build # Optionally change the name of the artifact
+          path: ./build # Adjust this to where your build outputs artifacts, e.g., './build'
 
   deploy:
     runs-on: ubuntu-latest
@@ -80,7 +80,32 @@ jobs:
             echo "PORT=${{ secrets.PORT }}" >> /home/ubuntu/apps/build/configs/.env.production
             echo "MONGODB_URL=${{ secrets.MONGODB_URL}}" >> /home/ubuntu/apps/build/configs/.env.production
 
-      - name: Install Yarn and PM2, and Deploy Application
+      - name: Install Yarn and PM2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # Ensure nvm, yarn, and pm2 are installed and available
+            if [ ! -d "/home/ubuntu/.nvm" ]; then
+              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+              export NVM_DIR="$HOME/.nvm"
+              [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+              nvm install 20
+            fi
+
+            # Install yarn and pm2 globally if not installed
+            if ! command -v yarn &> /dev/null; then
+              npm install -g yarn
+            fi
+
+            if ! command -v pm2 &> /dev/null; then
+              yarn global add pm2
+            fi
+
+      - name: Install Dependencies and Restart Application
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -91,14 +116,6 @@ jobs:
             # Load environment variables for Node.js and nvm
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # Load nvm
-            
-            # Check if PM2 is installed, install if necessary
-            if ! command -v pm2 &> /dev/null; then
-              echo "PM2 is not installed. Installing PM2..."
-              yarn global add pm2
-            else
-              echo "PM2 is already installed."
-            fi
 
             cd /home/ubuntu/apps/build
             yarn install --production
