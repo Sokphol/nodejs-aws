@@ -93,6 +93,7 @@ jobs:
 
             cd /home/ubuntu/apps/build
             yarn install --production
+            yarn add pm2
             # Assume PM2 is used, Replace with other command for other process manager
             # Assume you have script for run start in production and restart in production
             # Check if the PM2 process is running
