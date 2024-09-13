@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Specifies that the job should run on the latest Ubuntu virtual environment provided by GitHub
+    runs-on: ubuntu # Specifies that the job should run on the latest Ubuntu virtual environment provided by GitHub
     defaults:
       run:
         working-directory: "." # Adjust this to the root directory of your Node.js project
@@ -35,7 +35,7 @@ jobs:
           path: ./build # Adjust this to where your build outputs artifacts, e.g., './build'
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu
     needs: build
     if: github.ref == 'refs/heads/main'
 
